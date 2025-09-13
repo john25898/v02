@@ -1,9 +1,9 @@
-# Hello
+# Cool UI creation
 
 *Automatically synced with your [v0.app](https://v0.app) deployments*
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/gichimujohn820-2884s-projects/v0-button)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/AuuXv5aEpIG)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/johngichimu486-9974s-projects/v0-cool-ui-creation)
+[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/SHIaIRYgxj0)
 
 ## Overview
 
@@ -14,13 +14,13 @@ Any changes you make to your deployed app will be automatically pushed to this r
 
 Your project is live at:
 
-**[https://vercel.com/gichimujohn820-2884s-projects/v0-button](https://vercel.com/gichimujohn820-2884s-projects/v0-button)**
+**[https://vercel.com/johngichimu486-9974s-projects/v0-cool-ui-creation](https://vercel.com/johngichimu486-9974s-projects/v0-cool-ui-creation)**
 
 ## Build your app
 
 Continue building your app on:
 
-**[https://v0.app/chat/projects/AuuXv5aEpIG](https://v0.app/chat/projects/AuuXv5aEpIG)**
+**[https://v0.app/chat/projects/SHIaIRYgxj0](https://v0.app/chat/projects/SHIaIRYgxj0)**
 
 ## How It Works
 
