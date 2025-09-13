@@ -27,24 +27,18 @@ import {
   AlertTriangle,
   Settings,
   MapPin,
-  Phone,
-  Mail,
   Camera,
   Download,
   FileText,
   MessageSquare,
   Shield,
   Clock,
-  Target,
   Award,
   Droplets,
-  Bug,
-  Sprout,
   Calculator,
   QrCode,
   Printer,
   Filter,
-  Edit,
   ChevronRight,
   Home,
   Building,
@@ -58,32 +52,31 @@ import {
   ArrowUp,
   ArrowDown,
   WifiOff,
-  Star,
   Menu,
   X,
   ChevronLeft,
+  ArrowLeft,
 } from "lucide-react"
 
 export default function TeaFarmApp() {
-  const [activeTab, setActiveTab] = useState("dashboard")
   const [currentScreen, setCurrentScreen] = useState("main")
-  const [isOffline, setIsOffline] = useState(false)
+  const [selectedFarmer, setSelectedFarmer] = useState(null)
   const [selectedWorker, setSelectedWorker] = useState(null)
   const [selectedReceipt, setSelectedReceipt] = useState(null)
   const [showSidebar, setShowSidebar] = useState(false)
+  const [isOffline, setIsOffline] = useState(false)
+  const [activeTab, setActiveTab] = useState("dashboard")
+  const [isAddingWorker, setIsAddingWorker] = useState(false)
 
-  // Mock data
-  const farmData = {
-    cashOnHand: 45200,
-    committedPayouts: 12800,
-    todayKilos: 1247,
-    totalWorkers: 24,
-    activeReceipts: 8,
-    monthlyTarget: 25000,
-    currentMonthKilos: 18450,
-  }
+  const [newWorker, setNewWorker] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    block: "",
+    wageRate: 20,
+  })
 
-  const workers = [
+  const [workers, setWorkers] = useState([
     {
       id: "W001",
       name: "John Mwangi",
@@ -97,6 +90,22 @@ export default function TeaFarmApp() {
       block: "Block A",
       status: "active",
       avatar: "/kenyan-farmer.jpg",
+      receipts: [
+        {
+          id: "R001",
+          date: "2024-01-15",
+          kilos: 45,
+          amount: 900,
+          status: "paid",
+        },
+        {
+          id: "R002",
+          date: "2024-01-20",
+          kilos: 38,
+          amount: 760,
+          status: "pending",
+        },
+      ],
     },
     {
       id: "W002",
@@ -111,6 +120,15 @@ export default function TeaFarmApp() {
       block: "Block B",
       status: "active",
       avatar: "/abstract-geometric-shapes.png",
+      receipts: [
+        {
+          id: "R003",
+          date: "2024-01-18",
+          kilos: 52,
+          amount: 1040,
+          status: "paid",
+        },
+      ],
     },
     {
       id: "W003",
@@ -122,25 +140,101 @@ export default function TeaFarmApp() {
       performance: 95,
       wageRate: 20,
       joinDate: "2022-11-10",
-      block: "Block A",
-      status: "active",
-      avatar: "/abstract-geometric-shapes.png",
-    },
-    {
-      id: "W004",
-      name: "Grace Njeri",
-      phone: "+254 745 678 901",
-      email: "grace.njeri@email.com",
-      totalKilos: 1098,
-      earnings: 21960,
-      performance: 85,
-      wageRate: 20,
-      joinDate: "2023-03-05",
       block: "Block C",
       status: "active",
-      avatar: "/abstract-geometric-shapes.png",
+      avatar: "/placeholder.svg",
+      receipts: [],
     },
-  ]
+  ])
+
+  const [newWorkerReceipt, setNewWorkerReceipt] = useState({
+    date: new Date().toISOString().split("T")[0],
+    kilos: "",
+    amount: "",
+    status: "pending",
+  })
+
+  const [newFloat, setNewFloat] = useState({
+    amount: "",
+    source: "",
+    type: "inflow",
+    reference: "",
+  })
+
+  const [floatTransactions, setFloatTransactions] = useState([
+    {
+      id: "FT001",
+      type: "inflow",
+      amount: 50000,
+      source: "Owner Deposit - James Kiprotich",
+      timestamp: "2024-01-15T09:00:00",
+      balance: 95200,
+      reference: "DEP001",
+    },
+    {
+      id: "FT002",
+      type: "outflow",
+      amount: 850,
+      source: "Payment to John Mwangi",
+      timestamp: "2024-01-15T14:30:00",
+      balance: 44350,
+      reference: "PAY001",
+    },
+    {
+      id: "FT003",
+      type: "outflow",
+      amount: 720,
+      source: "Payment to Mary Wanjiku",
+      timestamp: "2024-01-15T13:15:00",
+      balance: 45070,
+      reference: "PAY002",
+    },
+  ])
+
+  const [currentFloat, setCurrentFloat] = useState(45200)
+
+  const addFloatTransaction = () => {
+    if (!newFloat.amount || !newFloat.source) {
+      alert("Please fill in all required fields")
+      return
+    }
+
+    const amount = Number.parseFloat(newFloat.amount)
+    const newBalance = newFloat.type === "inflow" ? currentFloat + amount : currentFloat - amount
+
+    if (newFloat.type === "outflow" && amount > currentFloat) {
+      alert("Insufficient float balance")
+      return
+    }
+
+    const transaction = {
+      id: `FT${String(floatTransactions.length + 1).padStart(3, "0")}`,
+      type: newFloat.type,
+      amount: amount,
+      source: newFloat.source,
+      timestamp: new Date().toISOString(),
+      balance: newBalance,
+      reference:
+        newFloat.reference || `${newFloat.type.toUpperCase()}${String(floatTransactions.length + 1).padStart(3, "0")}`,
+    }
+
+    setFloatTransactions([transaction, ...floatTransactions])
+    setCurrentFloat(newBalance)
+    setNewFloat({ amount: "", source: "", type: "inflow", reference: "" })
+    setCurrentScreen("main")
+    alert("Float transaction added successfully!")
+  }
+
+  // Mock data
+  const farmData = {
+    cashOnHand: 45200,
+    committedPayouts: 12800,
+    todayKilos: 1247,
+    totalWorkers: 24,
+    activeReceipts: 8,
+    monthlyTarget: 25000,
+    currentMonthKilos: 18450,
+  }
 
   const receipts = [
     {
@@ -193,36 +287,6 @@ export default function TeaFarmApp() {
     },
   ]
 
-  const floatTransactions = [
-    {
-      id: "FT001",
-      type: "inflow",
-      amount: 50000,
-      source: "Owner Deposit - James Kiprotich",
-      timestamp: "2024-01-15T09:00:00",
-      balance: 95200,
-      reference: "DEP001",
-    },
-    {
-      id: "FT002",
-      type: "outflow",
-      amount: 850,
-      source: "Payment to John Mwangi",
-      timestamp: "2024-01-15T14:30:00",
-      balance: 44350,
-      reference: "PAY001",
-    },
-    {
-      id: "FT003",
-      type: "outflow",
-      amount: 720,
-      source: "Payment to Mary Wanjiku",
-      timestamp: "2024-01-15T13:15:00",
-      balance: 45070,
-      reference: "PAY002",
-    },
-  ]
-
   const renderScreen = () => {
     switch (currentScreen) {
       case "splash":
@@ -232,7 +296,7 @@ export default function TeaFarmApp() {
       case "setup":
         return <SetupScreen />
       case "worker-profile":
-        return <WorkerProfileScreen worker={selectedWorker} />
+        return <WorkerProfileScreen />
       case "receipt-scan":
         return <ReceiptScanScreen />
       case "receipt-detail":
@@ -432,14 +496,16 @@ export default function TeaFarmApp() {
           <TabsContent value="dashboard" className="p-4 space-y-6">
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4">
-              <Card className="bg-gradient-to-br from-primary to-secondary text-primary-foreground">
+              <Card className="bg-primary text-primary-foreground">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm opacity-90">Cash on Hand</p>
-                      <p className="text-2xl font-bold">KSh {farmData.cashOnHand.toLocaleString()}</p>
+                      <p className="text-sm text-primary-foreground/90">Cash on Hand</p>
+                      <p className="text-2xl font-bold text-primary-foreground">
+                        KSh {farmData.cashOnHand.toLocaleString()}
+                      </p>
                     </div>
-                    <Wallet className="w-8 h-8 opacity-80" />
+                    <Wallet className="w-8 h-8 text-primary-foreground/80" />
                   </div>
                 </CardContent>
               </Card>
@@ -485,13 +551,16 @@ export default function TeaFarmApp() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-3">
-                <Button className="h-16 flex-col gap-2" onClick={() => setCurrentScreen("receipt-scan")}>
+                <Button
+                  className="h-16 flex-col gap-2 text-primary-foreground"
+                  onClick={() => setCurrentScreen("receipt-scan")}
+                >
                   <Scan className="w-6 h-6" />
                   Scan Receipt
                 </Button>
                 <Button
                   variant="secondary"
-                  className="h-16 flex-col gap-2"
+                  className="h-16 flex-col gap-2 text-secondary-foreground"
                   onClick={() => setCurrentScreen("float-add")}
                 >
                   <Plus className="w-6 h-6" />
@@ -499,15 +568,19 @@ export default function TeaFarmApp() {
                 </Button>
                 <Button
                   variant="outline"
-                  className="h-16 flex-col gap-2 bg-transparent"
-                  onClick={() => setCurrentScreen("worker-profile")}
+                  className="h-16 flex-col gap-2 bg-transparent text-foreground"
+                  onClick={() => {
+                    setSelectedWorker(null)
+                    setIsAddingWorker(true)
+                    setCurrentScreen("worker-profile")
+                  }}
                 >
                   <UserPlus className="w-6 h-6" />
                   Add Worker
                 </Button>
                 <Button
                   variant="outline"
-                  className="h-16 flex-col gap-2 bg-transparent"
+                  className="h-16 flex-col gap-2 bg-transparent text-foreground"
                   onClick={() => setCurrentScreen("audit-mode")}
                 >
                   <FileText className="w-6 h-6" />
@@ -624,72 +697,7 @@ export default function TeaFarmApp() {
           </TabsContent>
 
           {/* Receipts Tab */}
-          <TabsContent value="receipts" className="p-4 space-y-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Search receipts..." className="pl-10" />
-            </div>
-
-            <Button className="w-full h-16 text-lg" onClick={() => setCurrentScreen("receipt-scan")}>
-              <Scan className="w-6 h-6 mr-2" />
-              Scan KTDA Receipt
-            </Button>
-
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4 mr-2" />
-                Filter
-              </Button>
-              <Button variant="outline" size="sm">
-                <Calendar className="w-4 h-4 mr-2" />
-                Date Range
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {receipts.map((receipt) => (
-                <Card
-                  key={receipt.id}
-                  className="p-4 cursor-pointer hover:bg-muted/20 transition-colors"
-                  onClick={() => {
-                    setSelectedReceipt(receipt)
-                    setCurrentScreen("receipt-detail")
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
-                        <Leaf className="w-6 h-6 text-accent" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground">{receipt.worker}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {receipt.id} • {receipt.kilos}kg • {receipt.grade}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{new Date(receipt.timestamp).toLocaleString()}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-foreground">KSh {receipt.amount}</p>
-                      <Badge
-                        variant={
-                          receipt.status === "paid"
-                            ? "default"
-                            : receipt.status === "pending"
-                              ? "secondary"
-                              : "destructive"
-                        }
-                        className="text-xs"
-                      >
-                        {receipt.status}
-                      </Badge>
-                      <ChevronRight className="w-4 h-4 mt-1 text-muted-foreground" />
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
+          {enhancedReceiptsTab()}
 
           {/* Workers Tab */}
           <TabsContent value="workers" className="p-4 space-y-6">
@@ -698,7 +706,14 @@ export default function TeaFarmApp() {
               <Input placeholder="Search workers..." className="pl-10" />
             </div>
 
-            <Button className="w-full" onClick={() => setCurrentScreen("worker-profile")}>
+            <Button
+              className="w-full"
+              onClick={() => {
+                setSelectedWorker(null)
+                setIsAddingWorker(true)
+                setCurrentScreen("worker-profile")
+              }}
+            >
               <Plus className="w-4 h-4 mr-2" />
               Add New Worker
             </Button>
@@ -763,7 +778,7 @@ export default function TeaFarmApp() {
               <CardContent className="p-6">
                 <div className="text-center">
                   <p className="text-sm opacity-90">Available Float</p>
-                  <p className="text-4xl font-bold">KSh {farmData.cashOnHand.toLocaleString()}</p>
+                  <p className="text-4xl font-bold">KSh {currentFloat.toLocaleString()}</p>
                   <p className="text-sm opacity-90 mt-2">Committed: KSh {farmData.committedPayouts.toLocaleString()}</p>
                 </div>
               </CardContent>
@@ -939,7 +954,7 @@ export default function TeaFarmApp() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
-                activeTab === tab.id ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
+                activeTab === tab.id ? "text-foreground bg-muted" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <tab.icon className="w-5 h-5" />
@@ -1009,6 +1024,10 @@ export default function TeaFarmApp() {
                 <Label>Number of Blocks</Label>
                 <Input type="number" placeholder="5" />
               </div>
+              <div className="space-y-2">
+                <Label>Number of Blocks</Label>
+                <Input type="number" placeholder="5" />
+              </div>
               <Button className="w-full">
                 <MapPin className="w-4 h-4 mr-2" />
                 Set GPS Coordinates
@@ -1021,199 +1040,79 @@ export default function TeaFarmApp() {
     </div>
   )
 
-  const WorkerProfileScreen = () => (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
-          <ChevronLeft className="w-5 h-5" />
-        </Button>
-        <h1 className="text-lg font-semibold">{selectedWorker ? selectedWorker.name : "Add Worker"}</h1>
-        {selectedWorker && (
-          <Button variant="ghost" size="icon" className="ml-auto">
-            <Edit className="w-5 h-5" />
-          </Button>
-        )}
-      </header>
+  const addWorker = () => {
+    if (!newWorker.name || !newWorker.phone || !newWorker.block) {
+      alert("Please fill in all required fields")
+      return
+    }
 
-      <div className="p-4 space-y-6">
-        {selectedWorker ? (
-          <>
-            {/* Worker Profile Header */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <Avatar className="w-20 h-20">
-                    <AvatarImage src={selectedWorker.avatar || "/placeholder.svg"} />
-                    <AvatarFallback className="text-lg">
-                      {selectedWorker.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h2 className="text-xl font-bold text-foreground">{selectedWorker.name}</h2>
-                    <p className="text-muted-foreground">{selectedWorker.id}</p>
-                    <Badge variant="outline" className="mt-1">
-                      {selectedWorker.status}
-                    </Badge>
-                  </div>
-                  <Button variant="outline" size="icon">
-                    <QrCode className="w-5 h-5" />
-                  </Button>
-                </div>
+    const workerId = `W${String(workers.length + 1).padStart(3, "0")}`
+    const worker = {
+      id: workerId,
+      name: newWorker.name,
+      phone: newWorker.phone,
+      email: newWorker.email || `${newWorker.name.toLowerCase().replace(" ", ".")}@email.com`,
+      totalKilos: 0,
+      earnings: 0,
+      performance: 0,
+      wageRate: newWorker.wageRate,
+      joinDate: new Date().toISOString().split("T")[0],
+      block: newWorker.block,
+      status: "active",
+      avatar: "/placeholder.svg",
+      receipts: [],
+    }
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-muted/20 rounded-lg">
-                    <p className="text-2xl font-bold text-primary">{selectedWorker.totalKilos}</p>
-                    <p className="text-sm text-muted-foreground">Total Kilos</p>
-                  </div>
-                  <div className="text-center p-3 bg-muted/20 rounded-lg">
-                    <p className="text-2xl font-bold text-accent">KSh {selectedWorker.earnings.toLocaleString()}</p>
-                    <p className="text-sm text-muted-foreground">Total Earnings</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+    setWorkers([...workers, worker])
+    setNewWorker({ name: "", phone: "", email: "", block: "", wageRate: 20 })
+    setSelectedWorker(null)
+    setIsAddingWorker(false)
+    setCurrentScreen("main")
+    alert("Worker added successfully!")
+  }
 
-            {/* Contact Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Phone className="w-5 h-5" />
-                  Contact Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Phone className="w-4 h-4 text-muted-foreground" />
-                  <span>{selectedWorker.phone}</span>
-                  <Button variant="ghost" size="sm" className="ml-auto">
-                    <MessageSquare className="w-4 h-4" />
-                  </Button>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Mail className="w-4 h-4 text-muted-foreground" />
-                  <span>{selectedWorker.email}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <span>{selectedWorker.block}</span>
-                </div>
-              </CardContent>
-            </Card>
+  const addWorkerReceipt = () => {
+    if (!newWorkerReceipt.kilos || !newWorkerReceipt.amount) {
+      alert("Please fill in all required fields")
+      return
+    }
 
-            {/* Performance Metrics */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Performance Metrics</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">Overall Performance</span>
-                    <span className="text-sm font-medium">{selectedWorker.performance}%</span>
-                  </div>
-                  <Progress value={selectedWorker.performance} />
-                </div>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-lg font-bold text-foreground">95%</p>
-                    <p className="text-xs text-muted-foreground">Attendance</p>
-                  </div>
-                  <div>
-                    <p className="text-lg font-bold text-accent">18.5</p>
-                    <p className="text-xs text-muted-foreground">Avg kg/day</p>
-                  </div>
-                  <div>
-                    <p className="text-lg font-bold text-primary">A</p>
-                    <p className="text-xs text-muted-foreground">Quality Grade</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+    const receipt = {
+      id: `R${Date.now()}`,
+      date: newWorkerReceipt.date,
+      kilos: Number.parseFloat(newWorkerReceipt.kilos),
+      amount: Number.parseFloat(newWorkerReceipt.amount),
+      status: newWorkerReceipt.status,
+    }
 
-            {/* Recent Payments */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Payments</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {receipts
-                  .filter((r) => r.workerId === selectedWorker.id)
-                  .map((receipt) => (
-                    <div key={receipt.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
-                      <div>
-                        <p className="font-medium">{receipt.id}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {receipt.kilos}kg • {new Date(receipt.timestamp).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">KSh {receipt.amount}</p>
-                        <Badge variant={receipt.status === "paid" ? "default" : "secondary"} className="text-xs">
-                          {receipt.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-              </CardContent>
-            </Card>
-          </>
-        ) : (
-          /* Add New Worker Form */
-          <Card>
-            <CardHeader>
-              <CardTitle>Add New Worker</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-center mb-4">
-                <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
-                  <Camera className="w-8 h-8 text-muted-foreground" />
-                </div>
-              </div>
+    const updatedWorkers = workers.map((worker) =>
+      worker.id === selectedWorker.id
+        ? {
+            ...worker,
+            receipts: [...(worker.receipts || []), receipt],
+            totalKilos: worker.totalKilos + receipt.kilos,
+            earnings: worker.earnings + receipt.amount,
+          }
+        : worker,
+    )
 
-              <div className="space-y-2">
-                <Label>Full Name</Label>
-                <Input placeholder="John Mwangi" />
-              </div>
+    setWorkers(updatedWorkers)
 
-              <div className="space-y-2">
-                <Label>Phone Number</Label>
-                <Input placeholder="+254 7XX XXX XXX" />
-              </div>
+    // Update selectedWorker to reflect the changes immediately
+    const updatedSelectedWorker = updatedWorkers.find((w) => w.id === selectedWorker.id)
+    if (updatedSelectedWorker) {
+      setSelectedWorker(updatedSelectedWorker)
+    }
 
-              <div className="space-y-2">
-                <Label>Email (Optional)</Label>
-                <Input placeholder="john@email.com" />
-              </div>
+    setNewWorkerReceipt({
+      date: new Date().toISOString().split("T")[0],
+      kilos: "",
+      amount: "",
+      status: "pending",
+    })
 
-              <div className="space-y-2">
-                <Label>Assigned Block</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select block" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="block-a">Block A</SelectItem>
-                    <SelectItem value="block-b">Block B</SelectItem>
-                    <SelectItem value="block-c">Block C</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Wage Rate (KSh per kg)</Label>
-                <Input type="number" placeholder="20" />
-              </div>
-
-              <Button className="w-full">Add Worker</Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </div>
-  )
+    alert("Receipt added successfully!")
+  }
 
   const ReceiptScanScreen = () => (
     <div className="min-h-screen bg-background">
@@ -1292,52 +1191,922 @@ export default function TeaFarmApp() {
     </div>
   )
 
-  const PaymentConfirmationScreen = () => (
+  const PaymentConfirmationScreen = () => {
+    const mockReceipt = {
+      id: "KT001234",
+      timestamp: new Date().toISOString(),
+      block: "Block A",
+    }
+
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("receipt-scan")}>
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-lg font-semibold">Payment Confirmation</h1>
+        </header>
+
+        <div className="p-4 space-y-6">
+          {/* Receipt Details */}
+          <Card className="border-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-accent" />
+                Receipt Validated
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Receipt ID</p>
+                  <p className="font-semibold">KT001234</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Date & Time</p>
+                  <p className="font-semibold">{new Date(mockReceipt.timestamp).toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Worker</p>
+                  <p className="font-semibold">John Mwangi</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Block</p>
+                  <p className="font-semibold">{mockReceipt.block}</p>
+                </div>
+              </div>
+              <Separator />
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Total Payment</p>
+                <p className="text-3xl font-bold text-primary">KSh 850</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Denomination Planner */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Cash Denominations</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {[
+                { denom: 500, count: 1, total: 500 },
+                { denom: 200, count: 1, total: 200 },
+                { denom: 100, count: 1, total: 100 },
+                { denom: 50, count: 1, total: 50 },
+              ].map((item) => (
+                <div key={item.denom} className="flex items-center justify-between">
+                  <span>KSh {item.denom}</span>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm">
+                      -
+                    </Button>
+                    <span className="w-8 text-center">{item.count}</span>
+                    <Button variant="outline" size="sm">
+                      +
+                    </Button>
+                    <span className="w-16 text-right">KSh {item.total}</span>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Confirm Payment */}
+          <div className="space-y-3">
+            <Button className="w-full h-12 text-lg" onClick={() => setCurrentScreen("main")}>
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Confirm Payment
+            </Button>
+            <Button variant="outline" className="w-full bg-transparent">
+              <Printer className="w-4 h-4 mr-2" />
+              Print Receipt
+            </Button>
+            <Button variant="outline" className="w-full bg-transparent">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Send SMS Confirmation
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const SettingsScreen = () => {
+    return (
+      <div>
+        <h2>Settings Screen</h2>
+        {/* Add content for settings screen */}
+      </div>
+    )
+  }
+
+  const WorkerProfileScreen = () => {
+    const worker = selectedWorker
+    if (!worker && !isAddingWorker) return null
+
+    if (isAddingWorker) {
+      return (
+        <div className="p-4 space-y-6">
+          <div className="flex items-center gap-4 mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setIsAddingWorker(false)
+                setCurrentScreen("main")
+              }}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            <h2 className="text-xl font-semibold">Add New Worker</h2>
+          </div>
+
+          <Card className="p-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Name *</label>
+                <Input
+                  value={newWorker.name}
+                  onChange={(e) => setNewWorker({ ...newWorker, name: e.target.value })}
+                  placeholder="Enter worker name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Phone *</label>
+                <Input
+                  value={newWorker.phone}
+                  onChange={(e) => setNewWorker({ ...newWorker, phone: e.target.value })}
+                  placeholder="Enter phone number"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Email</label>
+                <Input
+                  value={newWorker.email}
+                  onChange={(e) => setNewWorker({ ...newWorker, email: e.target.value })}
+                  placeholder="Enter email address"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Block *</label>
+                <select
+                  className="w-full p-2 border rounded-md"
+                  value={newWorker.block}
+                  onChange={(e) => setNewWorker({ ...newWorker, block: e.target.value })}
+                >
+                  <option value="">Select Block</option>
+                  <option value="Block A">Block A</option>
+                  <option value="Block B">Block B</option>
+                  <option value="Block C">Block C</option>
+                  <option value="Block D">Block D</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Wage Rate (KSH per kg)</label>
+                <Input
+                  type="number"
+                  value={newWorker.wageRate}
+                  onChange={(e) => setNewWorker({ ...newWorker, wageRate: Number.parseFloat(e.target.value) })}
+                  placeholder="20"
+                />
+              </div>
+              <Button onClick={addWorker} className="w-full">
+                Add Worker
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )
+    }
+
+    return (
+      <div className="p-4 space-y-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSelectedWorker(null)
+              setCurrentScreen("main")
+            }}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+          <h2 className="text-xl font-semibold">{worker.name}</h2>
+        </div>
+
+        {/* Worker Info Card */}
+        <Card className="p-6">
+          <div className="flex items-center gap-4 mb-4">
+            <Avatar className="w-16 h-16">
+              <AvatarImage src={worker.avatar || "/placeholder.svg"} />
+              <AvatarFallback>
+                {worker.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="text-lg font-semibold">{worker.name}</h3>
+              <p className="text-muted-foreground">{worker.block}</p>
+              <Badge variant={worker.status === "active" ? "default" : "secondary"}>{worker.status}</Badge>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Phone</p>
+              <p className="font-medium">{worker.phone}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Email</p>
+              <p className="font-medium">{worker.email}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total Kilos</p>
+              <p className="font-medium">{worker.totalKilos} kg</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total Earnings</p>
+              <p className="font-medium">KSH {worker.earnings.toLocaleString()}</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Add Receipt Card */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Add New Receipt</h3>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Date</label>
+              <Input
+                type="date"
+                value={newWorkerReceipt.date}
+                onChange={(e) => setNewWorkerReceipt({ ...newWorkerReceipt, date: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Kilos</label>
+              <Input
+                type="number"
+                value={newWorkerReceipt.kilos}
+                onChange={(e) => setNewWorkerReceipt({ ...newWorkerReceipt, kilos: e.target.value })}
+                placeholder="Enter kilos"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Amount (KSH)</label>
+              <Input
+                type="number"
+                value={newWorkerReceipt.amount}
+                onChange={(e) => setNewWorkerReceipt({ ...newWorkerReceipt, amount: e.target.value })}
+                placeholder="Enter amount"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Status</label>
+              <select
+                className="w-full p-2 border rounded-md"
+                value={newWorkerReceipt.status}
+                onChange={(e) => setNewWorkerReceipt({ ...newWorkerReceipt, status: e.target.value })}
+              >
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+              </select>
+            </div>
+          </div>
+          <Button onClick={addWorkerReceipt} className="w-full">
+            Add Receipt
+          </Button>
+        </Card>
+
+        {/* Receipts History */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Receipt History</h3>
+          {worker.receipts && worker.receipts.length > 0 ? (
+            <div className="space-y-3">
+              {worker.receipts.map((receipt) => (
+                <div key={receipt.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{receipt.date}</p>
+                    <p className="text-sm text-muted-foreground">{receipt.kilos} kg</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">KSH {receipt.amount.toLocaleString()}</p>
+                    <Badge variant={receipt.status === "paid" ? "default" : "secondary"}>{receipt.status}</Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground">No receipts yet</p>
+          )}
+        </Card>
+      </div>
+    )
+  }
+
+  const enhancedReceiptsTab = () => (
+    <TabsContent value="receipts" className="p-4 space-y-6">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input placeholder="Search receipts..." className="pl-10" />
+      </div>
+
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm">
+          <Filter className="w-4 h-4 mr-2" />
+          Filter by Status
+        </Button>
+        <Button variant="outline" size="sm">
+          <Users className="w-4 h-4 mr-2" />
+          Filter by Worker
+        </Button>
+      </div>
+
+      <div className="space-y-3">
+        {receipts.map((receipt) => (
+          <Card
+            key={receipt.id}
+            className="p-4 cursor-pointer hover:bg-muted/20 transition-colors"
+            onClick={() => {
+              setSelectedReceipt(receipt)
+              setCurrentScreen("receipt-detail")
+            }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium text-foreground">{receipt.id}</h3>
+                  <Badge
+                    variant={
+                      receipt.status === "paid" ? "default" : receipt.status === "pending" ? "secondary" : "destructive"
+                    }
+                  >
+                    {receipt.status}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">{receipt.worker}</p>
+                <p className="text-sm text-muted-foreground">
+                  {receipt.kilos}kg • KSh {receipt.amount}
+                </p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </div>
+          </Card>
+        ))}
+      </div>
+    </TabsContent>
+  )
+
+  const ReceiptDetailScreen = ({ receipt }) => {
+    if (!receipt) return null
+
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-lg font-semibold">Receipt Details</h1>
+        </header>
+
+        <div className="p-4 space-y-6">
+          {/* Receipt Details */}
+          <Card className="border-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-accent" />
+                Receipt Validated
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Receipt ID</p>
+                  <p className="font-semibold">{receipt.id}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Date & Time</p>
+                  <p className="font-semibold">{new Date(receipt.timestamp).toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Worker</p>
+                  <p className="font-semibold">{receipt.worker}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Block</p>
+                  <p className="font-semibold">{receipt.block}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Grade</p>
+                  <p className="font-semibold">{receipt.grade}</p>
+                </div>
+              </div>
+              <Separator />
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Total Payment</p>
+                <p className="text-3xl font-bold text-primary">KSh {receipt.amount}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Actions */}
+          <div className="space-y-3">
+            <Button className="w-full h-12 text-lg" onClick={() => setCurrentScreen("payment-confirmation")}>
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Process Payment
+            </Button>
+            <Button variant="outline" className="w-full bg-transparent">
+              <Printer className="w-4 h-4 mr-2" />
+              Print Receipt
+            </Button>
+            <Button variant="outline" className="w-full bg-transparent">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Send SMS Confirmation
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const AddFloatScreen = () => (
     <div className="min-h-screen bg-background">
       <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("receipt-scan")}>
+        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
           <ChevronLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-lg font-semibold">Payment Confirmation</h1>
+        <h1 className="text-lg font-semibold">Add Float Transaction</h1>
       </header>
 
       <div className="p-4 space-y-6">
-        {/* Receipt Details */}
-        <Card className="border-primary">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-accent" />
-              Receipt Validated
-            </CardTitle>
+            <CardTitle>Transaction Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Receipt ID</p>
-                <p className="font-semibold">KT001234</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Worker</p>
-                <p className="font-semibold">John Mwangi</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Kilos</p>
-                <p className="font-semibold">42.5 kg</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Rate</p>
-                <p className="font-semibold">KSh 20/kg</p>
-              </div>
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <Select value={newFloat.type} onValueChange={(value) => setNewFloat({ ...newFloat, type: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="inflow">Inflow</SelectItem>
+                  <SelectItem value="outflow">Outflow</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Separator />
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">Total Payment</p>
-              <p className="text-3xl font-bold text-primary">KSh 850</p>
+            <div className="space-y-2">
+              <Label>Amount</Label>
+              <Input
+                type="number"
+                placeholder="Enter amount"
+                value={newFloat.amount}
+                onChange={(e) => setNewFloat({ ...newFloat, amount: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Source</Label>
+              <Input
+                placeholder="e.g., Owner Deposit, Payment to Supplier"
+                value={newFloat.source}
+                onChange={(e) => setNewFloat({ ...newFloat, source: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Reference (Optional)</Label>
+              <Input
+                placeholder="e.g., DEP001, PAY002"
+                value={newFloat.reference}
+                onChange={(e) => setNewFloat({ ...newFloat, reference: e.target.value })}
+              />
+            </div>
+            <Button className="w-full" onClick={addFloatTransaction}>
+              Add Transaction
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+
+  const PerformanceTrackingScreen = () => (
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="text-lg font-semibold">Performance Tracking</h1>
+      </header>
+
+      <div className="p-4 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Overall Farm Performance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <span className="w-24 text-sm text-muted-foreground">Total Kilos</span>
+                <Progress value={75} className="flex-1" />
+                <span className="w-12 text-sm font-medium text-foreground">18,450 kg</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="w-24 text-sm text-muted-foreground">Payment Rate</span>
+                <Progress value={92} className="flex-1" />
+                <span className="w-12 text-sm font-medium text-foreground">92%</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="w-24 text-sm text-muted-foreground">Worker Attendance</span>
+                <Progress value={85} className="flex-1" />
+                <span className="w-12 text-sm font-medium text-foreground">85%</span>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Denomination Planner */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Worker Performance</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {workers
+              .sort((a, b) => b.performance - a.performance)
+              .map((worker) => (
+                <div key={worker.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={worker.avatar || "/placeholder.svg"} />
+                      <AvatarFallback>
+                        {worker.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-foreground">{worker.name}</p>
+                      <p className="text-sm text-muted-foreground">{worker.block}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-foreground">{worker.performance}%</p>
+                  </div>
+                </div>
+              ))}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+
+  const ProductionStatsScreen = () => (
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="text-lg font-semibold">Production Statistics</h1>
+      </header>
+
+      <div className="p-4 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly Production</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <span className="w-24 text-sm text-muted-foreground">Total Kilos</span>
+                <Progress value={68} className="flex-1" />
+                <span className="w-12 text-sm font-medium text-foreground">18,450 kg</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="w-24 text-sm text-muted-foreground">Average Grade</span>
+                <Progress value={75} className="flex-1" />
+                <span className="w-12 text-sm font-medium text-foreground">75%</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Block Production</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {["Block A", "Block B", "Block C"].map((block) => (
+              <div key={block} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                <div>
+                  <p className="font-medium text-foreground">{block}</p>
+                  <p className="text-sm text-muted-foreground">1247 kg</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-foreground">68%</p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+
+  const FarmHealthScreen = () => (
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="text-lg font-semibold">Farm Health Journal</h1>
+      </header>
+
+      <div className="p-4 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Observations</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[
+              { date: "2024-01-22", observation: "Pest infestation in Block A" },
+              { date: "2024-01-20", observation: "Dry soil in Block C" },
+            ].map((item) => (
+              <div key={item.date} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                <div>
+                  <p className="font-medium text-foreground">{item.date}</p>
+                  <p className="text-sm text-muted-foreground">{item.observation}</p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Button className="w-full">Add New Observation</Button>
+      </div>
+    </div>
+  )
+
+  const DisputeTrackerScreen = () => (
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="text-lg font-semibold">Dispute Tracker</h1>
+      </header>
+
+      <div className="p-4 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Open Disputes</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[
+              { id: "D001", worker: "John Mwangi", reason: "Payment discrepancy" },
+              { id: "D002", worker: "Mary Wanjiku", reason: "Kilos dispute" },
+            ].map((item) => (
+              <div key={item.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                <div>
+                  <p className="font-medium text-foreground">{item.id}</p>
+                  <p className="text-sm text-muted-foreground">{item.worker}</p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Button className="w-full">Add New Dispute</Button>
+      </div>
+    </div>
+  )
+
+  const BudgetPlannerScreen = () => (
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="text-lg font-semibold">Budget Planner</h1>
+      </header>
+
+      <div className="p-4 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly Budget</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span>Total Income</span>
+              <span className="font-semibold">KSh 250,000</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Total Expenses</span>
+              <span className="font-semibold">KSh 180,000</span>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <span>Net Profit</span>
+              <span className="font-semibold">KSh 70,000</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Button className="w-full">Update Budget</Button>
+      </div>
+    </div>
+  )
+
+  const LoyaltySystemScreen = () => (
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="text-lg font-semibold">Loyalty System</h1>
+      </header>
+
+      <div className="p-4 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Loyalty Points</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span>John Mwangi</span>
+              <span className="font-semibold">120 points</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Mary Wanjiku</span>
+              <span className="font-semibold">85 points</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Button className="w-full">Add Loyalty Points</Button>
+      </div>
+    </div>
+  )
+
+  const OCRScannerScreen = () => (
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="text-lg font-semibold">OCR Scanner</h1>
+      </header>
+
+      <div className="p-4 space-y-6">
+        <Card className="aspect-square bg-muted/20 flex items-center justify-center">
+          <div className="text-center">
+            <Camera className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground">Position document in the frame</p>
+          </div>
+        </Card>
+
+        <Button className="w-full">Scan Document</Button>
+      </div>
+    </div>
+  )
+
+  const SMSAccessScreen = () => (
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="text-lg font-semibold">SMS Access</h1>
+      </header>
+
+      <div className="p-4 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Send SMS</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Phone Number</Label>
+              <Input placeholder="+254 7XX XXX XXX" />
+            </div>
+            <div className="space-y-2">
+              <Label>Message</Label>
+              <Input placeholder="Enter message" />
+            </div>
+            <Button className="w-full">Send SMS</Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+
+  const MultiOwnerScreen = () => (
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="text-lg font-semibold">Multi-Owner Mode</h1>
+      </header>
+
+      <div className="p-4 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Owner List</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span>James Kiprotich</span>
+              <span className="font-semibold">Admin</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Jane Doe</span>
+              <span className="font-semibold">Viewer</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Button className="w-full">Add New Owner</Button>
+      </div>
+    </div>
+  )
+
+  const AuditModeScreen = () => (
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="text-lg font-semibold">Audit Mode</h1>
+      </header>
+
+      <div className="p-4 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Generate Audit Report</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span>Period</span>
+              <span className="font-semibold">This Month</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Status</span>
+              <span className="font-semibold">Complete</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Button className="w-full">Generate Report</Button>
+      </div>
+    </div>
+  )
+
+  const WhatsAppIntegrationScreen = () => (
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="text-lg font-semibold">WhatsApp Integration</h1>
+      </header>
+
+      <div className="p-4 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Send WhatsApp Message</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Phone Number</Label>
+              <Input placeholder="+254 7XX XXX XXX" />
+            </div>
+            <div className="space-y-2">
+              <Label>Message</Label>
+              <Input placeholder="Enter message" />
+            </div>
+            <Button className="w-full">Send WhatsApp Message</Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+
+  const DenominationPlannerScreen = () => (
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="text-lg font-semibold">Denomination Planner</h1>
+      </header>
+
+      <div className="p-4 space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Cash Denominations</CardTitle>
@@ -1365,273 +2134,46 @@ export default function TeaFarmApp() {
             ))}
           </CardContent>
         </Card>
-
-        {/* Confirm Payment */}
-        <div className="space-y-3">
-          <Button className="w-full h-12 text-lg" onClick={() => setCurrentScreen("main")}>
-            <CheckCircle className="w-5 h-5 mr-2" />
-            Confirm Payment
-          </Button>
-          <Button variant="outline" className="w-full bg-transparent">
-            <Printer className="w-4 h-4 mr-2" />
-            Print Receipt
-          </Button>
-          <Button variant="outline" className="w-full bg-transparent">
-            <MessageSquare className="w-4 h-4 mr-2" />
-            Send SMS Confirmation
-          </Button>
-        </div>
       </div>
     </div>
   )
 
-  // Additional screens would continue here with similar comprehensive implementations...
-  // For brevity, I'll add a few more key screens
-
-  const PerformanceTrackingScreen = () => (
+  const IDCardGeneratorScreen = () => (
     <div className="min-h-screen bg-background">
       <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
           <ChevronLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-lg font-semibold">Performance Tracking</h1>
+        <h1 className="text-lg font-semibold">ID Card Generator</h1>
       </header>
 
       <div className="p-4 space-y-6">
-        {/* Performance Overview */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <TrendingUp className="w-8 h-8 mx-auto mb-2 text-accent" />
-              <p className="text-2xl font-bold">89%</p>
-              <p className="text-sm text-muted-foreground">Avg Performance</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Target className="w-8 h-8 mx-auto mb-2 text-primary" />
-              <p className="text-2xl font-bold">12</p>
-              <p className="text-sm text-muted-foreground">Top Performers</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Top Performers */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="w-5 h-5" />
-              Top Performers This Week
-            </CardTitle>
+            <CardTitle>Generate ID Card</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {workers
-              .sort((a, b) => b.performance - a.performance)
-              .map((worker, index) => (
-                <div key={worker.id} className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      index === 0
-                        ? "bg-yellow-500"
-                        : index === 1
-                          ? "bg-gray-400"
-                          : index === 2
-                            ? "bg-amber-600"
-                            : "bg-primary"
-                    }`}
-                  >
-                    <span className="text-sm font-bold text-white">{index + 1}</span>
-                  </div>
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage src={worker.avatar || "/placeholder.svg"} />
-                    <AvatarFallback>
-                      {worker.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="font-medium">{worker.name}</p>
-                    <p className="text-sm text-muted-foreground">{worker.totalKilos}kg this month</p>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant="secondary">{worker.performance}%</Badge>
-                    {index < 3 && <Star className="w-4 h-4 text-yellow-500 mt-1" />}
-                  </div>
-                </div>
-              ))}
-          </CardContent>
-        </Card>
-
-        {/* Performance Trends */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Weekly Trends</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {["Week 1", "Week 2", "Week 3", "Week 4"].map((week, i) => {
-                const values = [85, 92, 78, 95]
-                return (
-                  <div key={week} className="flex items-center gap-4">
-                    <span className="w-16 text-sm text-muted-foreground">{week}</span>
-                    <Progress value={values[i]} className="flex-1" />
-                    <span className="w-12 text-sm font-medium">{values[i]}%</span>
-                  </div>
-                )
-              })}
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Worker</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select worker" />
+                </SelectTrigger>
+                <SelectContent>
+                  {workers.map((worker) => (
+                    <SelectItem key={worker.id} value={worker.id}>
+                      {worker.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+            <Button className="w-full">Generate ID Card</Button>
           </CardContent>
         </Card>
       </div>
     </div>
   )
 
-  const FarmHealthScreen = () => (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => setCurrentScreen("main")}>
-          <ChevronLeft className="w-5 h-5" />
-        </Button>
-        <h1 className="text-lg font-semibold">Farm Health Journal</h1>
-        <Button variant="ghost" size="icon" className="ml-auto">
-          <Plus className="w-5 h-5" />
-        </Button>
-      </header>
-
-      <div className="p-4 space-y-6">
-        {/* Today's Conditions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CloudRain className="w-5 h-5" />
-              Today's Conditions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
-                <Droplets className="w-6 h-6 text-blue-500" />
-                <div>
-                  <p className="font-semibold">Rainfall</p>
-                  <p className="text-sm text-muted-foreground">15mm today</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
-                <Thermometer className="w-6 h-6 text-red-500" />
-                <div>
-                  <p className="font-semibold">Temperature</p>
-                  <p className="text-sm text-muted-foreground">18-24°C</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Entries */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Entries</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              {
-                date: "Today",
-                type: "fertilizer",
-                icon: Sprout,
-                title: "Fertilizer Application",
-                description: "NPK 25:5:5 applied to Block A",
-                status: "completed",
-              },
-              {
-                date: "Yesterday",
-                type: "pest",
-                icon: Bug,
-                title: "Pest Sighting",
-                description: "Tea mosquito bug spotted in Block C",
-                status: "monitoring",
-              },
-              {
-                date: "2 days ago",
-                type: "weather",
-                icon: CloudRain,
-                title: "Heavy Rainfall",
-                description: "45mm recorded, good for tea growth",
-                status: "positive",
-              },
-            ].map((entry, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
-                <div
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    entry.type === "fertilizer" ? "bg-green-100" : entry.type === "pest" ? "bg-red-100" : "bg-blue-100"
-                  }`}
-                >
-                  <entry.icon
-                    className={`w-5 h-5 ${
-                      entry.type === "fertilizer"
-                        ? "text-green-600"
-                        : entry.type === "pest"
-                          ? "text-red-600"
-                          : "text-blue-600"
-                    }`}
-                  />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">{entry.title}</p>
-                  <p className="text-sm text-muted-foreground">{entry.description}</p>
-                  <p className="text-xs text-muted-foreground">{entry.date}</p>
-                </div>
-                <Badge
-                  variant={
-                    entry.status === "completed" ? "default" : entry.status === "monitoring" ? "secondary" : "outline"
-                  }
-                >
-                  {entry.status}
-                </Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-4">
-          <Button variant="outline" className="h-16 flex-col gap-2 bg-transparent">
-            <Droplets className="w-6 h-6" />
-            Log Rainfall
-          </Button>
-          <Button variant="outline" className="h-16 flex-col gap-2 bg-transparent">
-            <Sprout className="w-6 h-6" />
-            Record Fertilizer
-          </Button>
-          <Button variant="outline" className="h-16 flex-col gap-2 bg-transparent">
-            <Bug className="w-6 h-6" />
-            Report Pest
-          </Button>
-          <Button variant="outline" className="h-16 flex-col gap-2 bg-transparent">
-            <Camera className="w-6 h-6" />
-            Take Photo
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
-
-  // Placeholder screens for remaining functionality
-  const ReceiptDetailScreen = () => <div className="p-4">Receipt Detail Screen</div>
-  const AddFloatScreen = () => <div className="p-4">Add Float Screen</div>
-  const ProductionStatsScreen = () => <div className="p-4">Production Stats Screen</div>
-  const DisputeTrackerScreen = () => <div className="p-4">Dispute Tracker Screen</div>
-  const BudgetPlannerScreen = () => <div className="p-4">Budget Planner Screen</div>
-  const LoyaltySystemScreen = () => <div className="p-4">Loyalty System Screen</div>
-  const OCRScannerScreen = () => <div className="p-4">OCR Scanner Screen</div>
-  const SMSAccessScreen = () => <div className="p-4">SMS Access Screen</div>
-  const MultiOwnerScreen = () => <div className="p-4">Multi-Owner Screen</div>
-  const AuditModeScreen = () => <div className="p-4">Audit Mode Screen</div>
-  const WhatsAppIntegrationScreen = () => <div className="p-4">WhatsApp Integration Screen</div>
-  const DenominationPlannerScreen = () => <div className="p-4">Denomination Planner Screen</div>
-  const IDCardGeneratorScreen = () => <div className="p-4">ID Card Generator Screen</div>
-  const SettingsScreen = () => <div className="p-4">Settings Screen</div>
-
-  return renderScreen()
+  return <div className="min-h-screen">{renderScreen()}</div>
 }
